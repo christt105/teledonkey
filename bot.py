@@ -179,6 +179,20 @@ async def on_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     await _reply_html(update, "\n\n".join(results))
 
 
+async def on_startup(app: Application) -> None:
+    """Notify the allowed users that the bot just came online."""
+    text = (
+        "🫏 <b>TeleDonkey is online</b> ✅\n"
+        f"Connected to mldonkey at <code>{mld.host}:{mld.port}</code>.\n"
+        "Send a link or /help."
+    )
+    for uid in ALLOWED_IDS:
+        try:
+            await app.bot.send_message(uid, text, parse_mode=ParseMode.HTML)
+        except Exception as exc:  # don't let a bad id stop startup
+            log.warning("Could not send startup message to %s: %s", uid, exc)
+
+
 def main() -> None:
     if not ALLOWED_IDS:
         log.warning(
@@ -186,7 +200,7 @@ def main() -> None:
             "Set it to your Telegram user id(s)."
         )
 
-    app = Application.builder().token(TOKEN).build()
+    app = Application.builder().token(TOKEN).post_init(on_startup).build()
 
     app.add_handler(CommandHandler(["start", "help"], cmd_start))
     app.add_handler(CommandHandler(["downloads", "dl"], cmd_downloads))

@@ -1,11 +1,10 @@
 services:
   teledonkey:
-    build: .
-    image: teledonkey:latest
+    image: christt105/teledonkey:latest
     container_name: teledonkey
     restart: unless-stopped
     env_file:
       - .env
-    # The bot only needs outbound access to Telegram and to mldonkey's host.
-    # Since mldonkey's ports are published on the host (192.168.1.15), the
-    # default bridge network is enough. Set MLDONKEY_HOST in .env accordingly.
+    # Image is built and published to Docker Hub by GitHub Actions on each
+    # commit. To update: `docker compose pull && docker compose up -d`.
+    # (To build locally instead, run `docker build -t christt105/teledonkey .`.)
