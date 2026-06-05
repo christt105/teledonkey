@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.png" alt="TeleDonkey" width="320">
+  <img src="logo.webp" alt="TeleDonkey" width="320">
 </p>
 
 <h1 align="center">🫏 TeleDonkey</h1>
