@@ -1,4 +1,8 @@
-# 🫏 TeleDonkey
+<p align="center">
+  <img src="logo.png" alt="TeleDonkey" width="320">
+</p>
+
+<h1 align="center">🫏 TeleDonkey</h1>
 
 A small Telegram bot that lets you push download links (ed2k, magnet, .torrent)
 to a remote [mldonkey](https://github.com/ygrek/mldonkey) instance and check on
