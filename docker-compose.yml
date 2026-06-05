@@ -1,0 +1,11 @@
+services:
+  teledonkey:
+    build: .
+    image: teledonkey:latest
+    container_name: teledonkey
+    restart: unless-stopped
+    env_file:
+      - .env
+    # The bot only needs outbound access to Telegram and to mldonkey's host.
+    # Since mldonkey's ports are published on the host (192.168.1.15), the
+    # default bridge network is enough. Set MLDONKEY_HOST in .env accordingly.
