@@ -10,7 +10,7 @@ import logging
 import os
 import re
 
-from telegram import Update
+from telegram import BotCommand, Update
 from telegram.constants import ParseMode
 from telegram.ext import (
     Application,
@@ -186,6 +186,19 @@ async def on_startup(app: Application) -> None:
         f"Connected to mldonkey at <code>{mld.host}:{mld.port}</code>.\n"
         "Send a link or /help."
     )
+    # Register the command list so it shows up in Telegram's "/" autocomplete menu.
+    await app.bot.set_my_commands(
+        [
+            BotCommand("downloads", "Show active downloads"),
+            BotCommand("cancel", "Cancel a download (/cancel <num>)"),
+            BotCommand("pause", "Pause a download (/pause <num>)"),
+            BotCommand("resume", "Resume a download (/resume <num>)"),
+            BotCommand("bw", "Bandwidth stats"),
+            BotCommand("raw", "Run a raw mldonkey console command (/raw <cmd>)"),
+            BotCommand("help", "Show help"),
+        ]
+    )
+
     for uid in ALLOWED_IDS:
         try:
             await app.bot.send_message(uid, text, parse_mode=ParseMode.HTML)
