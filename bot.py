@@ -26,7 +26,12 @@ from telegram.ext import (
     filters,
 )
 
-from formatting import format_result_line, parse_search_results, render_downloads
+from formatting import (
+    format_result_line,
+    parse_cancel_name,
+    parse_search_results,
+    render_downloads,
+)
 from mldonkey import MLDonkeyClient, MLDonkeyError
 
 logging.basicConfig(
@@ -145,6 +150,25 @@ def _num_action(label: str, method_name: str):
         await _reply_html(update, f"✅ <b>{label} #{num}</b>\n<pre>{msg}</pre>")
 
     return handler
+
+
+@restricted
+async def cmd_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not context.args or not context.args[0].isdigit():
+        await _reply_html(update, "Usage: /cancel &lt;num&gt;")
+        return
+    num = int(context.args[0])
+    try:
+        raw = await mld.cancel(num)
+    except MLDonkeyError as exc:
+        await _reply_html(update, f"⚠️ {html.escape(str(exc))}")
+        return
+    # Clean confirmation instead of mldonkey's whole file summary.
+    name = parse_cancel_name(raw)
+    msg = f"🗑️ <b>Cancelled #{num}</b>"
+    if name:
+        msg += f"\n<code>{html.escape(name)}</code>"
+    await _reply_html(update, msg)
 
 
 @restricted
@@ -374,7 +398,7 @@ def main() -> None:
     app.add_handler(CommandHandler(["search", "s"], cmd_search))
     app.add_handler(CommandHandler(["downloads", "dl"], cmd_downloads))
     app.add_handler(CommandHandler("bw", cmd_bw))
-    app.add_handler(CommandHandler("cancel", _num_action("cancel", "cancel")))
+    app.add_handler(CommandHandler("cancel", cmd_cancel))
     app.add_handler(CommandHandler("pause", _num_action("pause", "pause")))
     app.add_handler(CommandHandler("resume", _num_action("resume", "resume")))
     app.add_handler(CommandHandler("raw", cmd_raw))
