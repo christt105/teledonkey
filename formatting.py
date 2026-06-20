@@ -73,6 +73,76 @@ def _parse_row(state: str, num: int, rest: str):
     }
 
 
+# --- Search results ---------------------------------------------------------
+#
+# `vr` prints the results of the last search as a fixed-width table, one result
+# per line:
+#
+#   [ Num ]      Size     Avail Status        Names          Tags   MD4
+#   [     2] 12557510216     1      Doraemon y el viaje ...mkv      urn:ed2k:7308...
+#
+# The first bracketed number is the result index that `d <num>` downloads. Then
+# come the size in raw bytes and the availability (number of sources). The file
+# name (middle-truncated by mldonkey with "....") sits in the middle, and the
+# ed2k hash (urn:ed2k:...) closes the row. We key off that layout and pull the
+# name out from between the availability column and the hash.
+
+# A result row: "[     2] 12557510216     1   Some Name ...mkv   urn:ed2k:HASH"
+RESULT_RE = re.compile(r"^\s*\[\s*(\d+)\s*\]\s+(\d+)\s+(\d+)\s+(.*)$")
+# The ed2k hash that closes each row.
+URN_RE = re.compile(r"urn:ed2k:[0-9A-Fa-f]+", re.IGNORECASE)
+
+
+def _human_size(token: str) -> str:
+    """Pretty-print a size token; expand a bare byte count, pass units through."""
+    raw = token.strip()
+    if re.fullmatch(r"\d+", raw):
+        size = float(raw)
+        for unit in ("B", "KB", "MB", "GB", "TB"):
+            if size < 1024 or unit == "TB":
+                return f"{size:.0f} {unit}" if unit == "B" else f"{size:.1f} {unit}"
+            size /= 1024
+    return raw
+
+
+def parse_search_results(raw: str) -> list[dict]:
+    """Parse `vr` table output into [{num, name, size, avail, md4}] result dicts."""
+    text = strip_ansi(raw)
+    results: list[dict] = []
+    for line in text.splitlines():
+        m = RESULT_RE.match(line)
+        if not m:
+            continue
+        rest = m.group(4)
+        um = URN_RE.search(rest)
+        md4 = um.group(0) if um else ""
+        # Whatever sits between the availability column and the hash is the name
+        # (the Status/Tags columns are usually empty). Collapse mldonkey's "...."
+        # middle-truncation marker into a single ellipsis.
+        name = re.sub(r"\.{3,}", "…", URN_RE.sub("", rest).strip())
+        results.append({
+            "num": int(m.group(1)),
+            "name": name or "(no name)",
+            "size": _human_size(m.group(2)),
+            "avail": m.group(3),
+            "md4": md4,
+        })
+    return results
+
+
+def format_result_line(idx: int, r: dict) -> str:
+    """Render one search result as a couple of HTML lines for the message body."""
+    meta = []
+    if r.get("size"):
+        meta.append(f"📦 {html.escape(r['size'])}")
+    if r.get("avail"):
+        meta.append(f"👥 {html.escape(r['avail'])}")
+    head = f"<b>{idx}.</b> <code>{html.escape(r['name'][:80] or '(no name)')}</code>"
+    if meta:
+        head += f"\n     <i>{'  ·  '.join(meta)}</i>"
+    return head
+
+
 def render_downloads(raw: str, limit: int = 25) -> str:
     text = strip_ansi(raw)
     down = up = None

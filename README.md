@@ -16,6 +16,9 @@ no webhook needed).
 ## Commands
 
 - Send any `ed2k://`, `magnet:` or `https://…/file.torrent` link → added to downloads.
+- `/search <text>` (`/s`) — search the network and get a paginated list of
+  results with inline buttons. Tap a button to download a result; you can pick
+  several from the same search.
 - `/downloads` (`/dl`) — list active downloads with progress bars.
 - `/cancel <num>` / `/pause <num>` / `/resume <num>` — control a download by its number.
 - `/bw` — bandwidth stats.
